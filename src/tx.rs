@@ -27,7 +27,6 @@ fn get_secret(secret: &String) -> Result<(u16, SecretKey, PublicKey, String), Er
                     return Err(Error::new(ErrorKind::InvalidData, "address"));
                 }
             };
-            println!("address: {:?}", address);
 
             Ok((ETH, priv_key, pub_key, String::from("eth.0x".to_owned() + address)))
         }
@@ -231,19 +230,19 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
     let gas = _get_string_required(&m, "gas")?;
     let sequence = _get_string_required(&m, "sequence")?;
     
-    println!("from: {}", from);
-    println!("secret: {}", secret);
-    println!("to: {}", to);
-    println!("value: {}", value);
-    println!("gas: {}", gas);
-    println!("sequence: {}", sequence);
+    // println!("from: {}", from);
+    // println!("secret: {}", secret);
+    // println!("to: {}", to);
+    // println!("value: {}", value);
+    // println!("gas: {}", gas);
+    // println!("sequence: {}", sequence);
 
     let from_address = get_address(&from)?;
     let to_address = get_address(&to)?;
 
     let (key_type, priv_key, pub_key, _address) = get_secret(&secret)?;
-    dump("public", &pub_key.serialize().to_vec());
-    dump("private", &priv_key.serialize().to_vec());
+    // dump("public", &pub_key.serialize().to_vec());
+    // dump("private", &priv_key.serialize().to_vec());
 
     let mut tx = pb::Transaction {
         transaction_type: CORE_TRANSACTION as u32,
@@ -272,7 +271,7 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
     let (sig, _) = sign(&msg, &priv_key);
     let sig_bytes = sig.serialize();
     tx.signature = sig_bytes.to_vec();
-    dump("signature", &sig_bytes.to_vec());
+    // dump("signature", &sig_bytes.to_vec());
 
     if has_payload {
         let payload = _get_payload(&m, true)?;
@@ -283,7 +282,7 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
     let tx_bytes = buf.to_vec();
 
     let h = hash256(&tx_bytes);
-    println!("hash: {:?} {:?}", hex::encode(h256), hex::encode(h));
+    // println!("hash: {:?} {:?}", hex::encode(h256), hex::encode(h));
 
     return Ok(hex::encode(tx_bytes));
 }

@@ -1,3 +1,25 @@
+fn _post(last: pb::DataList, title:String, content:String) -> pb::DataList {
+    let mut mm = HashMap::<String, pb::Data>::new();
+    mm.insert("title".to_string(), pb::Data{
+        bytes: encode_string(title),
+    });
+    mm.insert("content".to_string(), pb::Data{
+        bytes: encode_string(content),
+    });
+    let nm = pb::DataMap{
+        map: mm,
+    };
+    let nm_bytes = encode(CORE_DATA_MAP, &nm).unwrap();
+
+    let mut list = last.list;
+    list.push(pb::Data{
+        bytes: nm_bytes,
+    });
+    return pb::DataList{
+        list: list,
+    };
+}
+
 fn _process(m: pb::DataMap, a:i32, b:i32) -> pb::DataMap {
     let list_result = m.map.get("list").unwrap();
     let mut list:pb::DataList = decode(&list_result.bytes).unwrap().unwrap();
