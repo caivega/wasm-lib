@@ -1,3 +1,5 @@
+use tiny_keccak::{Hasher, Keccak};
+
 const CORE_DATA:u8  = 11;
 
 const CORE_DATA_NULL:u8    = 50;
@@ -579,3 +581,12 @@ fn hash256(bytes: &Vec<u8>) -> Vec<u8> {
     sha256.update(bytes);
     return sha256.finalize().to_vec();
 }
+
+fn keccak256(bytes: &Vec<u8>) -> Vec<u8> {
+    let hash = &mut [0; 32];
+    let mut keccak256 = Keccak::v256();
+	keccak256.update(bytes);
+	keccak256.finalize(hash);
+    return hash.to_vec();
+}
+    

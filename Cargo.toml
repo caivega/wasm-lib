@@ -17,6 +17,7 @@ prost-derive = "0.11.8"
 ecies = {version = "0.2", default-features = false, features = ["pure"]}
 libsecp256k1 = "0.7.1"
 sha2 = "0.10.6"
+tiny-keccak = { version = "2.0.0", features = ["keccak"] }
 
 [package.metadata.wasm-pack.profile.release]
 wasm-opt = false

@@ -1,10 +1,35 @@
-fn get_secret(secret: &String) -> Result<(u16, SecretKey, PublicKey), Error> {
+fn get_secret(secret: &String) -> Result<(u16, SecretKey, PublicKey, String), Error> {
     let s = secret.strip_prefix("eth.").unwrap_or(&secret);
     match hex::decode(s) {
         Ok(ss) => {
             let priv_key = SecretKey::parse_slice(&ss).unwrap();
             let pub_key = PublicKey::from_secret_key(&priv_key);
-            Ok((ETH, priv_key, pub_key))
+
+            let pub_bytes = pub_key.serialize();
+            let hash = keccak256(&pub_bytes[1..].to_vec());
+            let address_hex = hex::encode(hash[12..].to_vec());
+            let address_bytes: &mut [u8] = &mut address_hex.as_bytes().to_owned();
+            let address_hash = keccak256(&address_hex.as_bytes().to_vec());
+            for i in 0..address_bytes.len() {
+                let mut hash_byte = address_hash[i/2];
+                if i%2 == 0 {
+                    hash_byte = hash_byte >> 4
+                } else {
+                    hash_byte &= 0xf
+                }
+                if address_bytes[i] > b'9' && hash_byte > 7 {
+                    address_bytes[i] -= 32
+                }
+            }
+            let address = match from_utf8(address_bytes) {
+                Ok(a) => a,
+                _ => {
+                    return Err(Error::new(ErrorKind::InvalidData, "address"));
+                }
+            };
+            println!("address: {:?}", address);
+
+            Ok((ETH, priv_key, pub_key, String::from("eth.0x".to_owned() + address)))
         }
         _ => {
             return Err(Error::new(ErrorKind::InvalidData, "secret"));
@@ -216,7 +241,7 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
     let from_address = get_address(&from)?;
     let to_address = get_address(&to)?;
 
-    let (key_type, priv_key, pub_key) = get_secret(&secret)?;
+    let (key_type, priv_key, pub_key, _address) = get_secret(&secret)?;
     dump("public", &pub_key.serialize().to_vec());
     dump("private", &priv_key.serialize().to_vec());
 

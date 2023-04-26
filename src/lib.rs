@@ -23,6 +23,43 @@ include!("./tx.rs");
 include!("./test.rs");
 
 #[wasm_bindgen]
+pub fn generate_account(phrase:String) -> String {
+    let bs = phrase.as_bytes();
+    let hash = keccak256(&bs.to_vec());
+
+    let secret = "eth.".to_owned() + &hex::encode(&hash);
+    
+    let (_, _, pub_key, address) = get_secret(&secret).unwrap();
+    let public = "eth.".to_owned() + &hex::encode(pub_key.serialize());
+
+    // println!("{}", &secret);
+    // println!("{}", &public);
+    // println!("{}", &address);
+
+    return ["ETH", &address, &secret, &public].join(",");
+
+    // let mut mm = HashMap::<String, pb::Data>::new();
+    // mm.insert("type".to_string(), pb::Data {
+    //     bytes: encode_string("ETH".to_string()),
+    // });
+    // mm.insert("address".to_string(), pb::Data{
+    //     bytes: encode_string(address),
+    // });
+    // mm.insert("private".to_string(), pb::Data{
+    //     bytes: encode_string(secret),
+    // });
+    // mm.insert("public".to_string(), pb::Data{
+    //     bytes: encode_string(public),
+    // });
+    // let nm = pb::DataMap{
+    //     map: mm,
+    // };
+    // let rb = encode(CORE_DATA_MAP, &nm).unwrap();
+    // let reply = hex::encode(rb);
+    // return reply;
+}
+
+#[wasm_bindgen]
 pub fn sign_transaction(s:String) -> String {
     if s.len() == 0 {
         return "".to_string()
@@ -60,6 +97,11 @@ pub fn sign_transaction(s:String) -> String {
 #[test]
 fn data_test() {
     assert_eq!(CORE_DATA_INT32, get_type("int32"));
+}
+
+#[test]
+fn generate_test(){
+    generate_account("masterpassphrase".to_string());
 }
 
 #[test]
