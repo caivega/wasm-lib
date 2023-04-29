@@ -536,7 +536,8 @@
                 {
                     "name": "b",
                     "type": "string",
-                    "data":true
+                    "data":true,
+                    "hex":true
                 },
                 {
                     "name": "c",
@@ -547,7 +548,8 @@
                 {
                     "name": "result",
                     "type": "string",
-                    "data":true
+                    "data":true,
+                    "hex":true
                 }
             ],
             "wasm":{
@@ -590,7 +592,8 @@
                 {
                     "name": "b",
                     "type": "string",
-                    "data":true
+                    "data":true,
+                    "hex":true
                 },
                 {
                     "name": "c",
@@ -601,7 +604,8 @@
                 {
                     "name": "result",
                     "type": "string",
-                    "data":true
+                    "data":true,
+                    "hex":true
                 }
             ],
             "wasm":{

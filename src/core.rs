@@ -1,4 +1,5 @@
 use tiny_keccak::{Hasher, Keccak};
+use libsecp256k1::{util::FULL_PUBLIC_KEY_SIZE, Error as SecpError};
 
 const CORE_DATA:u8  = 11;
 
@@ -589,4 +590,52 @@ fn keccak256(bytes: &Vec<u8>) -> Vec<u8> {
 	keccak256.finalize(hash);
     return hash.to_vec();
 }
+
+fn _generate_keypair() -> (SecretKey, PublicKey) {
+    let sk = SecretKey::random(&mut OsRng);
+    (sk, PublicKey::from_secret_key(&sk))
+}
+
+fn _generate_aes_key() -> Vec<u8> {
+    return Aes256Gcm::generate_key(&mut OsRng).to_vec();
+}
+
+fn _generate_aes_nonce() -> Vec<u8> {
+    return Aes256Gcm::generate_nonce(&mut OsRng).to_vec();
+}
+
+fn _aes_encrypt(k:&Vec<u8>, n:&Vec<u8>, m:&Vec<u8>) -> Result<Vec<u8>, SecpError> {
+    let cipher = match Aes256Gcm::new_from_slice(k) {
+        Ok(c) => c,
+        _ => {
+            return Err(SecpError::InvalidInputLength);
+        }
+    };
+    let nonce = Nonce::from_slice(n);
+    let ciphertext = match cipher.encrypt(nonce, m.as_ref()) {
+        Ok(c) => c,
+        _ => {
+            return Err(SecpError::InvalidMessage);
+        }
+    };
     
+    Ok(ciphertext)
+}
+
+fn _aes_decrypt(k:&Vec<u8>, n:&Vec<u8>, m:&Vec<u8>) -> Result<Vec<u8>, SecpError> {
+    let cipher = match Aes256Gcm::new_from_slice(k) {
+        Ok(c) => c,
+        _ => {
+            return Err(SecpError::InvalidInputLength);
+        }
+    };
+    let nonce = Nonce::from_slice(n);
+    let dephertext = match cipher.decrypt(nonce, m.as_ref()) {
+        Ok(c) => c,
+        _ => {
+            return Err(SecpError::InvalidMessage);
+        }
+    };
+
+    Ok(dephertext)
+}

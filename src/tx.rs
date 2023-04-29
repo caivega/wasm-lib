@@ -1,3 +1,16 @@
+fn get_public(pub_key: &String) -> Result<(u16, PublicKey), Error> {
+    let s = pub_key.strip_prefix("eth.").unwrap_or(&pub_key);
+    match hex::decode(s) {
+        Ok(ss) => {
+            let pk = PublicKey::parse_slice(&ss, Some(PublicKeyFormat::Full)).unwrap();
+            return Ok((ETH, pk));
+        }
+        _ => {
+            return Err(Error::new(ErrorKind::InvalidData, "public key"));
+        }
+    }
+}
+
 fn get_secret(secret: &String) -> Result<(u16, SecretKey, PublicKey, String), Error> {
     let s = secret.strip_prefix("eth.").unwrap_or(&secret);
     match hex::decode(s) {
@@ -226,14 +239,12 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
     let from = _get_string_required(&m, "from")?;
     let secret = _get_string_required(&m, "secret")?;
     let to = _get_string_required(&m, "to")?;
-    let value = _get_string_required(&m, "value")?;
     let gas = _get_string_required(&m, "gas")?;
     let sequence = _get_string_required(&m, "sequence")?;
     
     // println!("from: {}", from);
     // println!("secret: {}", secret);
     // println!("to: {}", to);
-    // println!("value: {}", value);
     // println!("gas: {}", gas);
     // println!("sequence: {}", sequence);
 
@@ -248,8 +259,7 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
         transaction_type: CORE_TRANSACTION as u32,
         account: from_address,
         sequence: sequence.parse::<u64>().unwrap(),
-        amount: value,
-        gas: gas.parse::<i64>().unwrap(),
+        gas: gas.parse::<u64>().unwrap(),
         destination: to_address,
         payload: None,
         public_key: encode_key(key_type, pub_key.serialize().to_vec()),
@@ -281,7 +291,7 @@ fn _sign_tx(m: pb::DataMap) -> Result<String, Error> {
     let buf = encode(CORE_TRANSACTION, &tx).unwrap();
     let tx_bytes = buf.to_vec();
 
-    let h = hash256(&tx_bytes);
+    // let h = hash256(&tx_bytes);
     // println!("hash: {:?} {:?}", hex::encode(h256), hex::encode(h));
 
     return Ok(hex::encode(tx_bytes));
