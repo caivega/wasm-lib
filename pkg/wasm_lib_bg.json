@@ -526,7 +526,7 @@
             }
         },
         {
-            "name": "process",
+            "name": "test_process",
             "type": "function",
             "inputs": [
                 {
@@ -553,7 +553,7 @@
                 }
             ],
             "wasm":{
-                "name": "process",
+                "name": "test_process",
                 "type": "function",
                 "inputs": [
                     {
@@ -582,7 +582,7 @@
             }
         },
         {
-            "name": "list",
+            "name": "test_list",
             "type": "function",
             "inputs": [
                 {
@@ -609,7 +609,7 @@
                 }
             ],
             "wasm":{
-                "name": "list",
+                "name": "test_list",
                 "type": "function",
                 "inputs": [
                     {
@@ -663,7 +663,7 @@
                 }
             ],
             "wasm":{
-                "name": "list",
+                "name": "post",
                 "type": "function",
                 "inputs": [
                     {
@@ -692,6 +692,93 @@
                     },
                     {
                         "name": "g",
+                        "type": "int32"
+                    }
+                ],
+                "outputs":[
+                ]
+            }
+        },
+        {
+            "name": "register",
+            "type": "function",
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "string",
+                    "data":true
+                },
+                {
+                    "name": "b",
+                    "type": "string"
+                }
+            ],
+            "outputs":[
+                {
+                    "name": "result",
+                    "type": "string",
+                    "data":true
+                }
+            ],
+            "wasm":{
+                "name": "register",
+                "type": "function",
+                "inputs": [
+                    {
+                        "name": "a",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "b",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "c",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "d",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "e",
+                        "type": "int32"
+                    }
+                ],
+                "outputs":[
+                ]
+            }
+        },
+        {
+            "name": "list",
+            "type": "function",
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "string",
+                    "data":true
+                }
+            ],
+            "outputs":[
+                {
+                    "name": "result",
+                    "type": "string"
+                }
+            ],
+            "wasm":{
+                "name": "list",
+                "type": "function",
+                "inputs": [
+                    {
+                        "name": "a",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "b",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "c",
                         "type": "int32"
                     }
                 ],

@@ -1,10 +1,19 @@
+fn _register(mut last: pb::DataMap, address:&String) -> pb::DataMap {
+    let mut mm = last.map;
+    mm.insert(address.to_string(), pb::Data{
+        bytes: encode_string(address),
+    });
+    last.map = mm;
+    return last;
+}
+
 fn _post(last: pb::DataList, title:String, content:String) -> pb::DataList {
     let mut mm = HashMap::<String, pb::Data>::new();
     mm.insert("title".to_string(), pb::Data{
-        bytes: encode_string(title),
+        bytes: encode_string(&title),
     });
     mm.insert("content".to_string(), pb::Data{
-        bytes: encode_string(content),
+        bytes: encode_string(&content),
     });
     let nm = pb::DataMap{
         map: mm,
@@ -20,7 +29,7 @@ fn _post(last: pb::DataList, title:String, content:String) -> pb::DataList {
     };
 }
 
-fn _process(m: pb::DataMap, a:i32, b:i32) -> pb::DataMap {
+fn _test_process(m: pb::DataMap, a:i32, b:i32) -> pb::DataMap {
     let list_result = m.map.get("list").unwrap();
     let mut list:pb::DataList = decode(&list_result.bytes).unwrap().unwrap();
 
@@ -44,7 +53,7 @@ fn _process(m: pb::DataMap, a:i32, b:i32) -> pb::DataMap {
     return nm;
 }
 
-fn _list(l0: pb::DataList, a:i32, b:i32) -> pb::DataList {
+fn _test_list(l0: pb::DataList, a:i32, b:i32) -> pb::DataList {
     let mut sum_i64:i64 = (a + b).into();
     for d in l0.list {
         if let Ok(Some(m)) = decode::<pb::DataMap>(&d.bytes) {

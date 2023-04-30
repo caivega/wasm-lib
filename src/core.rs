@@ -1,6 +1,3 @@
-use tiny_keccak::{Hasher, Keccak};
-use libsecp256k1::{util::FULL_PUBLIC_KEY_SIZE, Error as SecpError};
-
 const CORE_DATA:u8  = 11;
 
 const CORE_DATA_NULL:u8    = 50;
@@ -259,7 +256,7 @@ fn get_from_string(meta: u8, s: &str) -> Result<Vec<u8>, Error> {
             }
         }
         CORE_DATA_STRING => {
-            return Ok(encode_string(String::from(s)));
+            return Ok(encode_string(&String::from(s)));
         }
         CORE_DATA_BYTES => {
             match hex::decode(s) {
@@ -479,7 +476,7 @@ fn encode_f64(v: f64) -> Vec<u8> {
     return buf;
 }
 
-fn encode_string(v: String) -> Vec<u8> {
+fn encode_string(v: &String) -> Vec<u8> {
     let mut buf = vec![];
     buf.put_u8(CORE_DATA_STRING);
     buf.put_slice(v.as_bytes());
@@ -581,61 +578,4 @@ fn hash256(bytes: &Vec<u8>) -> Vec<u8> {
     let mut sha256 = Sha256::new();
     sha256.update(bytes);
     return sha256.finalize().to_vec();
-}
-
-fn keccak256(bytes: &Vec<u8>) -> Vec<u8> {
-    let hash = &mut [0; 32];
-    let mut keccak256 = Keccak::v256();
-	keccak256.update(bytes);
-	keccak256.finalize(hash);
-    return hash.to_vec();
-}
-
-fn _generate_keypair() -> (SecretKey, PublicKey) {
-    let sk = SecretKey::random(&mut OsRng);
-    (sk, PublicKey::from_secret_key(&sk))
-}
-
-fn _generate_aes_key() -> Vec<u8> {
-    return Aes256Gcm::generate_key(&mut OsRng).to_vec();
-}
-
-fn _generate_aes_nonce() -> Vec<u8> {
-    return Aes256Gcm::generate_nonce(&mut OsRng).to_vec();
-}
-
-fn _aes_encrypt(k:&Vec<u8>, n:&Vec<u8>, m:&Vec<u8>) -> Result<Vec<u8>, SecpError> {
-    let cipher = match Aes256Gcm::new_from_slice(k) {
-        Ok(c) => c,
-        _ => {
-            return Err(SecpError::InvalidInputLength);
-        }
-    };
-    let nonce = Nonce::from_slice(n);
-    let ciphertext = match cipher.encrypt(nonce, m.as_ref()) {
-        Ok(c) => c,
-        _ => {
-            return Err(SecpError::InvalidMessage);
-        }
-    };
-    
-    Ok(ciphertext)
-}
-
-fn _aes_decrypt(k:&Vec<u8>, n:&Vec<u8>, m:&Vec<u8>) -> Result<Vec<u8>, SecpError> {
-    let cipher = match Aes256Gcm::new_from_slice(k) {
-        Ok(c) => c,
-        _ => {
-            return Err(SecpError::InvalidInputLength);
-        }
-    };
-    let nonce = Nonce::from_slice(n);
-    let dephertext = match cipher.decrypt(nonce, m.as_ref()) {
-        Ok(c) => c,
-        _ => {
-            return Err(SecpError::InvalidMessage);
-        }
-    };
-
-    Ok(dephertext)
 }
