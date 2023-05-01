@@ -22,46 +22,39 @@ fn data_test() {
 }
 
 #[wasm_bindgen]
-pub fn list(last:String) -> String {
-    if last.len() > 0 {
-        if let Ok(request) = hex::decode(&last) {
-            if let Ok(Some(r)) = decode::<pb::DataMap>(&request) {
-                let mut s:String = "".to_owned();
-                for (key, _) in r.map {
-                    if s.len() == 0 {
-                        s = "\"".to_owned() + &key + "\"";
-                    }else{
-                        s = s + ",\"" + &key + "\"";
+pub fn list_register(last:String) -> String {
+    let last_map = decode_map_from_string(&last);
+    match last_map {
+        Some(r) => {
+            let mut s:String = "".to_owned();
+            for (address, data) in r.map {
+                if let Ok(Some(m)) = decode::<pb::DataMap>(&data.bytes) {
+                    if let Ok(Some(name)) = get_string_from_map(&m, "name") {
+                        if let Ok(Some(index)) = get_int64_from_map(&m, "index") {
+                            if s.len() == 0 {
+                                s = "[".to_owned() + &index.to_string() + ",\"" + &name + "\",\"" + &address + "\"]";
+                            }else{
+                                s = s + ",[" + &index.to_string() + ",\"" + &name + "\",\"" + &address + "\"]";
+                            }
+                        }
                     }
                 }
-                return s;
             }
+            return s;
+        }
+        _ => {
+            return "".to_string()
         }
     }
-    return "".to_string();
 }
 
 #[wasm_bindgen]
-pub fn register(last:String, address:String) -> String {
-    let mut last_map = None;
-    if last.len() == 0 {
-        last_map = Some(pb::DataMap{
-            map: HashMap::<String, pb::Data>::new(),
-        });
-    }else{
-        if let Ok(request) = hex::decode(&last) {
-            if let Ok(r) = decode(&request) {
-                last_map = r;
-            }
-        }
-    }
-
+pub fn register(last:String, name:String, address:String) -> String {
+    let last_map = decode_map_from_string(&last);
     match last_map {
         Some(lm) => {
-            let rmap: pb::DataMap = _register(lm, &address);
-            let rb = encode(CORE_DATA_MAP, &rmap).unwrap();
-            let reply = hex::encode(rb);
-            return reply;
+            let rmap: pb::DataMap = _register(lm, &name, &address);
+            return encode_map_to_string(&rmap);
         }
         _ => {
             return "".to_string()
@@ -71,50 +64,110 @@ pub fn register(last:String, address:String) -> String {
 
 #[test]
 fn register_test() {
-    let ret0 = register("".to_string(), "address0".to_string());
-    let ret1 = register(ret0, "address1".to_string());
-    let r = list(ret1);
-    assert_eq!(r, "\"address0\",\"address1\"");
+    let ret0 = register("".to_string(), "name0".to_string(), "address0".to_string());
+    let r0 = list_register(ret0.clone());
+    assert_eq!(r0, "[0,\"name0\",\"address0\"]");
+    let ret1 = register(ret0, "name1".to_string(), "address1".to_string());
+    let r1 = list_register(ret1);
+    assert_eq!(r1.len(), "[0,\"name0\",\"address0\"],[1,\"name1\",\"address1\"]".len());
+}
+
+#[wasm_bindgen]
+pub fn list_post(last:String) -> String {
+    let last_list = decode_list_from_string(&last);
+    match last_list {
+        Some(ll) => {
+            let mut s:String = "".to_owned();
+            for l in &ll.list {
+                if let Ok(Some(m)) = decode::<pb::DataMap>(&l.bytes) {
+                    if let Ok(Some(title)) = get_string_from_map(&m, "title") {
+                        if let Ok(Some(content)) = get_string_from_map(&m, "content") {
+                            if s.len() == 0 {
+                                s = "[\"".to_owned() + &title + "\",\"" + &content + "\"]";
+                            }else{
+                                s = s + ",[\"" + &title + "\",\"" + &content + "\"]";
+                            }
+                        }
+                    }
+                }
+            }
+            return s;
+        }
+        _ => {
+            return "".to_string()
+        }
+    }
 }
 
 #[wasm_bindgen]
 pub fn post(last:String, title:String, content:String) -> String {
-    if last.len() == 0 {
-        return "[\"".to_owned() + &title + "\",\"" + &content + "\"]";
-    }else{
-        return last + ",[\"" + &title + "\",\"" + &content + "\"]";
+    let last_list = decode_list_from_string(&last);
+    match last_list {
+        Some(ll) => {
+            let rlist: pb::DataList = _post(ll, title, content);
+            return encode_list_to_string(&rlist);
+        }
+        _ => {
+            return "".to_string()
+        }
     }
+}
 
-    // let mut last_list = None;
-    // if last.len() == 0 {
-    //     last_list = Some(pb::DataList{
-    //         list: vec![],
-    //     });
-    // }
-    // if let Ok(request) = hex::decode(&last) {
-    //     if let Ok(r) = decode(&request) {
-    //         last_list = r;
-    //     }
-    // }
-    // match last_list {
-    //     Some(ll) => {
-    //         let rlist: pb::DataList = _post(ll, title, content);
-    //         let rb = encode(CORE_DATA_LIST, &rlist).unwrap();
-    //         let reply = hex::encode(rb);
-    //         return reply;
-    //     }
-    //     _ => {
-    //         return "".to_string()
-    //     }
-    // }
+#[wasm_bindgen]
+pub fn list_apply(last:String) -> String {
+    if let Some(ll) = decode_list_from_string(&last) {
+        let mut s:String = "".to_owned();
+        for i in 0..ll.list.len() {
+            if let Ok(Some(la)) = get_map_from_list(&ll, i) {
+                if let Ok(Some(list)) = get_list_from_map(&la, "list"){
+                    for l in &list.list {
+                        let info = hex::encode(&l.bytes);
+                        if s.len() == 0 {
+                            s = "[".to_owned() + &i.to_string() + ",\"" + &info + "\"]";
+                        }else{
+                            s = s + ",[" + &i.to_string() + ",\"" + &info + "\"]";
+                        }
+                    }
+                }
+            }
+        }
+        return s;
+    }
+    return "".to_string();
+}
+
+#[wasm_bindgen]
+pub fn apply(last:String, index:i64, info:String) -> String {
+    if let Some(ll) = decode_list_from_string(&last) {
+        if let Ok(info_bytes) = hex::decode(info) {
+            let rlist: pb::DataList = _apply(ll, index, info_bytes);
+            return encode_list_to_string(&rlist);
+        }
+    }
+    return "".to_string();
 }
 
 #[test]
 fn post_test() {
     let ret0 = post("".to_string(), "job_title_test0".to_string(), "job_content_test0".to_string());
-    assert_eq!(&ret0, "[\"job_title_test0\",\"job_content_test0\"]");
+    let list0 = list_post(ret0.clone());
+    assert_eq!(&list0, "[\"job_title_test0\",\"job_content_test0\"]");
     let ret1 = post(ret0, "job_title_test1".to_string(), "job_content_test1".to_string());
-    assert_eq!(&ret1, "[\"job_title_test0\",\"job_content_test0\"],[\"job_title_test1\",\"job_content_test1\"]");
+    let list1 = list_post(ret1.clone());
+    assert_eq!(&list1, "[\"job_title_test0\",\"job_content_test0\"],[\"job_title_test1\",\"job_content_test1\"]");
+
+    let info0 = hex::encode(b"test info0");
+    let info1 = hex::encode(b"test info1");
+    let ret2 = apply(ret1.clone(), 1i64, info0);
+    let list2 = list_apply(ret2.clone());
+    assert_eq!(&list2, "[1,\"7465737420696e666f30\"]");
+    let ret3 = apply(ret2.clone(), 1i64, info1);
+    let list3 = list_apply(ret3.clone());
+    assert_eq!(&list3, "[1,\"7465737420696e666f30\"],[1,\"7465737420696e666f31\"]");
+    let info2 = hex::encode(b"test info2");
+    let ret4 = apply(ret3.clone(), 0i64, info2);
+    let list4 = list_apply(ret4.clone());
+    assert_eq!(&list4, "[0,\"7465737420696e666f32\"],[1,\"7465737420696e666f30\"],[1,\"7465737420696e666f31\"]");
 }
 
 #[wasm_bindgen]
@@ -173,28 +226,15 @@ pub fn test_f32_string_f64_ret_string(a: f32, b: String, c: f64) -> String {
 }
 
 #[wasm_bindgen]
-pub fn test_process(a:i32, s:String, b:i32) -> String {
-    if s.len() == 0 {
+pub fn test_process(a:i32, last:String, b:i32) -> String {
+    if last.len() == 0 {
         return "".to_string()
     }
-    match hex::decode(s) {
-        Ok(request) => {
-            match decode(&request) {
-                Ok(r) => match r {
-                    Some(m) => {
-                        let r: pb::DataMap = _test_process(m, a, b);
-                        let rb = encode(CORE_DATA_MAP, &r).unwrap();
-                        let reply = hex::encode(rb);
-                        return reply;
-                    }
-                    _ => {
-                        return "".to_string()
-                    }
-                }
-                _ => {
-                    return "".to_string()
-                }
-            }
+    let last_map = decode_map_from_string(&last);
+    match last_map {
+        Some(m) => {
+            let rmap: pb::DataMap = _test_process(m, a, b);
+            return encode_map_to_string(&rmap);
         }
         _ => {
             return "".to_string()
@@ -203,28 +243,15 @@ pub fn test_process(a:i32, s:String, b:i32) -> String {
 }
 
 #[wasm_bindgen]
-pub fn test_list(a:i32, s:String, b:i32) -> String {
-    if s.len() == 0 {
+pub fn test_list(a:i32, last:String, b:i32) -> String {
+    if last.len() == 0 {
         return "".to_string()
     }
-    match hex::decode(s) {
-        Ok(request) => {
-            match decode(&request) {
-                Ok(r) => match r {
-                    Some(list) => {
-                        let rlist: pb::DataList = _test_list(list, a, b);
-                        let rb = encode(CORE_DATA_LIST, &rlist).unwrap();
-                        let reply = hex::encode(rb);
-                        return reply;
-                    }
-                    _ => {
-                        return "".to_string()
-                    }
-                }
-                _ => {
-                    return "".to_string()
-                }
-            }
+    let last_list = decode_list_from_string(&last);
+    match last_list {
+        Some(list) => {
+            let rlist: pb::DataList = _test_list(list, a, b);
+            return encode_list_to_string(&rlist);
         }
         _ => {
             return "".to_string()

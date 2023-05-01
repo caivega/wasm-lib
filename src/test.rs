@@ -1,10 +1,15 @@
-fn _register(mut last: pb::DataMap, address:&String) -> pb::DataMap {
-    let mut mm = last.map;
-    mm.insert(address.to_string(), pb::Data{
-        bytes: encode_string(address),
+fn _register(last: pb::DataMap, name:&String, address:&String) -> pb::DataMap {
+    let mut mm = HashMap::<String, pb::Data>::new();
+    mm.insert("index".to_string(), pb::Data{
+        bytes: encode_i64(last.map.len() as i64),
     });
-    last.map = mm;
-    return last;
+    mm.insert("name".to_string(), pb::Data{
+        bytes: encode_string(name),
+    });
+    let nm = pb::DataMap{
+        map: mm,
+    };
+    return map_put(last, address.to_string(), CORE_DATA_MAP, &nm)
 }
 
 fn _post(last: pb::DataList, title:String, content:String) -> pb::DataList {
@@ -18,15 +23,31 @@ fn _post(last: pb::DataList, title:String, content:String) -> pb::DataList {
     let nm = pb::DataMap{
         map: mm,
     };
-    let nm_bytes = encode(CORE_DATA_MAP, &nm).unwrap();
+    return list_push(last, CORE_DATA_MAP, &nm);
+}
 
-    let mut list = last.list;
-    list.push(pb::Data{
-        bytes: nm_bytes,
-    });
-    return pb::DataList{
-        list: list,
-    };
+fn _apply(last: pb::DataList, index:i64, info_bytes:Vec<u8>) -> pb::DataList {
+    if let Ok(Some(mut nm)) = get_map_from_list(&last, index as usize) {
+        if let Ok(Some(mut ll)) = get_list_from_map(&nm, "list") {
+            let mut list = ll.list;
+            list.push(pb::Data{
+                bytes: info_bytes,
+            });
+            ll.list = list;
+            nm = map_put(nm, "list".to_string(), CORE_DATA_LIST, &ll);
+        }else{
+            let ll = pb::DataList{
+                list: vec![
+                    pb::Data{
+                        bytes: info_bytes,
+                    },
+                ],
+            };
+            nm = map_put(nm, "list".to_string(), CORE_DATA_LIST, &ll);
+        }
+        return list_update(last, index as usize, CORE_DATA_MAP, &nm);
+    }
+    return last;
 }
 
 fn _test_process(m: pb::DataMap, a:i32, b:i32) -> pb::DataMap {

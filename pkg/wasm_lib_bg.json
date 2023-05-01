@@ -700,6 +700,43 @@
             }
         },
         {
+            "name": "list_post",
+            "type": "function",
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "string",
+                    "data":true
+                }
+            ],
+            "outputs":[
+                {
+                    "name": "result",
+                    "type": "string"
+                }
+            ],
+            "wasm":{
+                "name": "list_post",
+                "type": "function",
+                "inputs": [
+                    {
+                        "name": "a",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "b",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "c",
+                        "type": "int32"
+                    }
+                ],
+                "outputs":[
+                ]
+            }
+        },
+        {
             "name": "register",
             "type": "function",
             "inputs": [
@@ -710,6 +747,10 @@
                 },
                 {
                     "name": "b",
+                    "type": "string"
+                },
+                {
+                    "name": "c",
                     "type": "string"
                 }
             ],
@@ -743,6 +784,14 @@
                     {
                         "name": "e",
                         "type": "int32"
+                    },
+                    {
+                        "name": "f",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "g",
+                        "type": "int32"
                     }
                 ],
                 "outputs":[
@@ -750,7 +799,7 @@
             }
         },
         {
-            "name": "list",
+            "name": "list_register",
             "type": "function",
             "inputs": [
                 {
@@ -766,7 +815,102 @@
                 }
             ],
             "wasm":{
-                "name": "list",
+                "name": "list_register",
+                "type": "function",
+                "inputs": [
+                    {
+                        "name": "a",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "b",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "c",
+                        "type": "int32"
+                    }
+                ],
+                "outputs":[
+                ]
+            }
+        },
+        {
+            "name": "apply",
+            "type": "function",
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "string",
+                    "data":true
+                },
+                {
+                    "name": "b",
+                    "type": "int64"
+                },
+                {
+                    "name": "c",
+                    "type": "string"
+                }
+            ],
+            "outputs":[
+                {
+                    "name": "result",
+                    "type": "string",
+                    "data":true
+                }
+            ],
+            "wasm":{
+                "name": "apply",
+                "type": "function",
+                "inputs": [
+                    {
+                        "name": "a",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "b",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "c",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "d",
+                        "type": "int64"
+                    },
+                    {
+                        "name": "e",
+                        "type": "int32"
+                    },
+                    {
+                        "name": "f",
+                        "type": "int32"
+                    }
+                ],
+                "outputs":[
+                ]
+            }
+        },
+        {
+            "name": "list_apply",
+            "type": "function",
+            "inputs": [
+                {
+                    "name": "a",
+                    "type": "string",
+                    "data":true
+                }
+            ],
+            "outputs":[
+                {
+                    "name": "result",
+                    "type": "string"
+                }
+            ],
+            "wasm":{
+                "name": "list_apply",
                 "type": "function",
                 "inputs": [
                     {

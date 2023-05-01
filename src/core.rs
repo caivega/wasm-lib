@@ -298,6 +298,84 @@ fn print_type_of<T>(_: &T) {
     println!("{}", std::any::type_name::<T>());
 }
 
+fn decode_map_from_string(s: &String) -> Option<pb::DataMap> {
+    let mut map = None;
+    if s.len() == 0 {
+        map = Some(pb::DataMap{
+            map: HashMap::<String, pb::Data>::new(),
+        });
+    }else{
+        if let Ok(request) = hex::decode(s) {
+            if let Ok(r) = decode(&request) {
+                map = r;
+            }
+        }
+    }
+    return map;
+}
+
+fn encode_map_to_string(map: &pb::DataMap) -> String {
+    if let Ok(rb) = encode(CORE_DATA_MAP, map) {
+        return hex::encode(rb);
+    }
+    return "".to_string();
+}
+
+fn decode_list_from_string(s: &String) -> Option<pb::DataList> {
+    let mut list = None;
+    if s.len() == 0 {
+        list = Some(pb::DataList{
+            list: vec![],
+        });
+    }
+    if let Ok(request) = hex::decode(s) {
+        if let Ok(r) = decode(&request) {
+            list = r;
+        }
+    }
+    return list;
+}
+
+fn encode_list_to_string(list: &pb::DataList) -> String {
+    if let Ok(rb) = encode(CORE_DATA_LIST, list) {
+        return hex::encode(rb);
+    }
+    return "".to_string();
+}
+
+fn map_put<T: ProtoMessage + std::default::Default>(mut map: pb::DataMap, key: String, t: u8, value: &T) -> pb::DataMap {
+    if let Ok(value_bytes) = encode::<T>(t, value) {
+        let mut mm = map.map;
+        mm.insert(key, pb::Data{
+            bytes: value_bytes,
+        });
+        map.map = mm;
+    }
+    return map;
+}
+
+fn list_push<T: ProtoMessage + std::default::Default>(mut list: pb::DataList, t:u8, value: &T) -> pb::DataList {
+    if let Ok(value_bytes) = encode::<T>(t, value) {
+        let mut ll = list.list;
+        ll.push(pb::Data{
+            bytes: value_bytes,
+        });
+        list.list = ll;
+    }
+    return list;
+}
+
+fn list_update<T: ProtoMessage + std::default::Default>(mut list: pb::DataList, index:usize, t:u8, value: &T) -> pb::DataList {
+    if let Ok(value_bytes) = encode::<T>(t, value) {
+        let mut ll = list.list;
+        ll[index] = pb::Data{
+            bytes: value_bytes,
+        };
+        list.list = ll;
+    }
+    return list;
+}
+
 fn decode<T: ProtoMessage + std::default::Default>(data: &Vec<u8>) -> Result<Option<T>, Error> {
     if data.len() == 0 {
         return Err(Error::new(ErrorKind::InvalidData, "empty"));
@@ -516,7 +594,7 @@ fn encode<T: ProtoMessage + std::default::Default>(t: u8, m: &T) -> Result<Vec<u
     return Ok(m.to_vec());
 }
 
-fn _get_string(m: &pb::DataMap, k: &str) -> Result<Option<String>, Error> {
+fn get_string_from_map(m: &pb::DataMap, k: &str) -> Result<Option<String>, Error> {
     if !m.map.contains_key(k) {
         return Ok(None);   
     }
@@ -533,8 +611,8 @@ fn _get_string(m: &pb::DataMap, k: &str) -> Result<Option<String>, Error> {
     return Ok(None);
 }
 
-fn _get_string_required(m: &pb::DataMap, k: &str) -> Result<String, Error> {
-    let r = _get_string(m, k)?;
+fn get_string_from_map_required(m: &pb::DataMap, k: &str) -> Result<String, Error> {
+    let r = get_string_from_map(m, k)?;
     match r {
         Some(s) => {
             return Ok(s);
@@ -545,7 +623,65 @@ fn _get_string_required(m: &pb::DataMap, k: &str) -> Result<String, Error> {
     }
 }
 
-fn _get_map(m: &pb::DataMap, k: &str) -> Result<Option<pb::DataMap>, Error> {
+fn get_int64_from_map(m: &pb::DataMap, k: &str) -> Result<Option<i64>, Error> {
+    if !m.map.contains_key(k) {
+        return Ok(None);   
+    }
+    if let Some(v) = m.map.get(k) {
+        match decode_i64(&v) {
+            Some(s) => {
+                return Ok(Some(s));
+            }
+            _ => {
+                return Err(Error::new(ErrorKind::InvalidData, "int64"));
+            }
+        }
+    }
+    return Ok(None);
+}
+
+fn get_int64_from_map_required(m: &pb::DataMap, k: &str) -> Result<i64, Error> {
+    let r = get_int64_from_map(m, k)?;
+    match r {
+        Some(s) => {
+            return Ok(s);
+        }
+        None => {
+            return Err(Error::from(ErrorKind::NotFound));
+        }
+    }
+}
+
+fn get_list_from_map(m: &pb::DataMap, k: &str) -> Result<Option<pb::DataList>, Error> {
+    if !m.map.contains_key(k) {
+        return Ok(None);
+    }
+    if let Some(v) = m.map.get(k) {
+        match decode::<pb::DataList>(&v.bytes) {
+            Ok(o) => {
+                return Ok(o);
+            }
+            _ => {
+                return Err(Error::new(ErrorKind::InvalidData, "data list"));
+            }
+        }
+    }
+    return Ok(None);
+}
+
+fn get_list_from_map_required(m: &pb::DataMap, k: &str) -> Result<pb::DataList, Error> {
+    let r = get_list_from_map(m, k)?;
+    match r {
+        Some(sm) => {
+            return Ok(sm);
+        }
+        None => {
+            return Err(Error::from(ErrorKind::NotFound));
+        }
+    }
+}
+
+fn get_map_from_map(m: &pb::DataMap, k: &str) -> Result<Option<pb::DataMap>, Error> {
     if !m.map.contains_key(k) {
         return Ok(None);
     }
@@ -562,8 +698,37 @@ fn _get_map(m: &pb::DataMap, k: &str) -> Result<Option<pb::DataMap>, Error> {
     return Ok(None);
 }
 
-fn _get_map_required(m: &pb::DataMap, k: &str) -> Result<pb::DataMap, Error> {
-    let r = _get_map(m, k)?;
+fn get_map_from_map_required(m: &pb::DataMap, k: &str) -> Result<pb::DataMap, Error> {
+    let r = get_map_from_map(m, k)?;
+    match r {
+        Some(sm) => {
+            return Ok(sm);
+        }
+        None => {
+            return Err(Error::from(ErrorKind::NotFound));
+        }
+    }
+}
+
+fn get_map_from_list(l: &pb::DataList, index:usize) -> Result<Option<pb::DataMap>, Error> {
+    if index >= l.list.len() {
+        return Ok(None);
+    }
+    if let Some(v) = l.list.get(index) {
+        match decode::<pb::DataMap>(&v.bytes) {
+            Ok(o) => {
+                return Ok(o);
+            }
+            _ => {
+                return Err(Error::new(ErrorKind::InvalidData, "data map"));
+            }
+        }
+    }
+    return Ok(None);
+}
+
+fn get_map_from_list_required(l: &pb::DataList, index:usize) -> Result<pb::DataMap, Error> {
+    let r = get_map_from_list(l, index)?;
     match r {
         Some(sm) => {
             return Ok(sm);
