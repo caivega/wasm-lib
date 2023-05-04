@@ -739,6 +739,7 @@
         {
             "name": "register",
             "type": "function",
+            "public":true,
             "inputs": [
                 {
                     "name": "a",
@@ -838,6 +839,7 @@
         {
             "name": "apply",
             "type": "function",
+            "public":true,
             "inputs": [
                 {
                     "name": "a",
