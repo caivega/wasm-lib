@@ -702,6 +702,7 @@
         {
             "name": "list_post",
             "type": "function",
+            "public":true,
             "inputs": [
                 {
                     "name": "a",
@@ -802,6 +803,7 @@
         {
             "name": "list_register",
             "type": "function",
+            "public":true,
             "inputs": [
                 {
                     "name": "a",
